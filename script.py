@@ -10,7 +10,6 @@ import subprocess
 import shutil
 import re
 
-current_dir = os.path.dirname(os.path.realpath(__file__))
 base_url = 'http://www.bing.com'
 hpimagearchive_url = '/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-US'
 
