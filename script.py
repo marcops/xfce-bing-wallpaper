@@ -10,13 +10,44 @@ import subprocess
 import shutil
 import re
 
-base_url = 'http://www.bing.com'
-hpimagearchive_url = '/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-US'
+def get_max_resolution():
+    import subprocess, re
 
+    max_width, max_height = 0, 0
 
-def get_image_link():
     try:
-        r = requests.get(base_url + hpimagearchive_url, timeout=10)
+        res = subprocess.run(['xrandr', '--query'], capture_output=True, text=True, check=False)
+        for line in res.stdout.splitlines():
+            m = re.match(r'^([A-Za-z0-9-]+)\s+connected.*?(\d+)x(\d+)\+.*', line)
+            if m:
+                width = int(m.group(2))
+                height = int(m.group(3))
+                if width * height > max_width * max_height:
+                    max_width, max_height = width, height
+    except Exception:
+        # fallback genérico
+        max_width, max_height = 1920, 1080
+
+    return max_width, max_height
+
+
+def get_base_url():
+    return 'http://www.bing.com'
+
+def get_url(days_back=0, width=1920, height=1080, market='en-US'):
+    hpimagearchive_url = (
+        f'/HPImageArchive.aspx?format=js&idx={days_back}&n=1&mkt={market}'
+        f'&uhd=1&uhdwidth={width}&uhdheight={height}'
+    )
+    return get_base_url() + hpimagearchive_url
+
+
+def get_image_link_from_json(days: int):
+    try:
+        max_width, max_height = get_max_resolution()
+        url = get_url(days_back=days, width=max_width, height=max_height) 
+        print(url)
+        r = requests.get(url)
         r.raise_for_status()
         json_obj = r.json()
         return json_obj['images'][0]['url']
@@ -30,6 +61,7 @@ def download_image(img_link):
     Downloads the image only if it doesn't already exist.
     Keeps original filename.
     """
+    print(img_link)
     if not img_link:
         return None
 
@@ -44,7 +76,7 @@ def download_image(img_link):
         return filepath
 
     if img_link.startswith('/'):
-        img_link = base_url + img_link
+        img_link = get_base_url() + img_link
 
     try:
         resp = requests.get(img_link, timeout=30)
@@ -115,8 +147,8 @@ def detect_monitors():
     return monitors if monitors else ['monitor0']
 
 
-def set_wallpaper():
-    img_link = get_image_link()
+def set_wallpaper(days: int):
+    img_link = get_image_link_from_json(days)
     if not img_link:
         return
 
@@ -176,7 +208,9 @@ def interactive_prompt():
     print('What would you like to do?')
     print('1) Set wallpaper now')
     print('2) Install scheduled job (cron at 03:00 and 15:00)')
-    return input('Choose 1 or 2: ').strip()
+    print('3) Set wallpaper from N days ago')
+    print('4) Remove cron job')
+    return input('Choose 1, 2, 3, or 4: ').strip()
 
 def main():
     if len(sys.argv) > 1 and sys.argv[1] in ('set-wallpaper', '--set-wallpaper'):
@@ -185,11 +219,26 @@ def main():
 
     choice = interactive_prompt()
     if choice == '1':
-        set_wallpaper()
+        set_wallpaper(0)
     elif choice == '2':
         print('Installing scheduled job.')
         copy_script_to_local_bin()
         install_user_cron()
+    elif choice == '3':
+        days = input('How many days back? ').strip()
+        try:
+            days = int(days)
+        except ValueError:
+            print('Invalid number, exiting.')
+            return
+        set_wallpaper(days)
+
+    elif choice == '4':
+        try:
+            subprocess.run(['crontab', '-r'], check=True)
+            print('Cron job removed.')
+        except Exception as e:
+            print('Failed to remove cron:', e)
     else:
         print('Invalid choice, exiting.')
 
