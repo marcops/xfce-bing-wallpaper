@@ -140,23 +140,17 @@ def set_wallpaper():
     print('Wallpaper set for monitors:', ', '.join(monitors))
 
 def copy_script_to_local_bin(dest_executable=os.path.expanduser('~/.local/bin/xfce-bing-wallpaper')):
-    """
-    Copia o script atual para ~/.local/bin e garante permissão executável.
-    """
     import shutil
 
     os.makedirs(os.path.dirname(dest_executable), exist_ok=True)
 
-    if not os.path.exists(dest_executable):
-        try:
-            shutil.copyfile(os.path.realpath(__file__), dest_executable)
-            os.chmod(dest_executable, 0o755)
-            print(f'Script copied to {dest_executable} and made executable.')
-        except Exception as e:
-            print(f'Failed to copy script to {dest_executable}:', e)
-            return False
-    else:
-        print(f'Script already exists at {dest_executable}.')
+    try:
+        shutil.copyfile(os.path.realpath(__file__), dest_executable)
+        os.chmod(dest_executable, 0o755)
+        print(f'Script copied to {dest_executable} and made executable.')
+    except Exception as e:
+        print(f'Failed to copy script to {dest_executable}:', e)
+        return False
     return True
 
 def install_user_cron(dest_executable=os.path.expanduser('~/.local/bin/xfce-bing-wallpaper')):
