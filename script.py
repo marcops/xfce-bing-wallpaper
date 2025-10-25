@@ -186,7 +186,7 @@ def main():
             print('Please run the script with sudo, e.g.:')
             print(f'  sudo python3 {os.path.realpath(__file__)}')
             return
-        print('Installing scheduled job. This will require root privileges.')       
+        print('Installing scheduled job.')
         install_cron_job('/usr/local/bin/xfce-bing-wallpaper')
     else:
         print('Invalid choice, exiting.')
