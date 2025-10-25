@@ -37,14 +37,13 @@ def download_image(img_link):
     img_dir = os.path.expanduser('~/.local/share/xfce-bing-wallpaper/')
     os.makedirs(img_dir, exist_ok=True)
 
-    filename = img_link.split('/')[-1]  # mantém o nome original
+    filename = img_link.split('/')[-1]
     filepath = os.path.join(img_dir, filename)
 
     if os.path.exists(filepath):
         print(f'Image already exists: {filepath}')
         return filepath
 
-    # constrói URL completa se necessário
     if img_link.startswith('/'):
         img_link = base_url + img_link
 
@@ -184,6 +183,8 @@ def interactive_prompt():
     choice = input('Choose 1 or 2: ').strip()
     return choice
 
+def cron_job_exists(cronfile='/etc/cron.d/xfce-bing-wallpaper'):
+    return os.path.exists(cronfile) and os.path.getsize(cronfile) > 0
 
 def main():
     if len(sys.argv) > 1 and sys.argv[1] in ('set-wallpaper', '--set-wallpaper'):
@@ -194,6 +195,10 @@ def main():
     if choice == '1':
         set_wallpaper()
     elif choice == '2':
+        if cron_job_exists():
+            print('Cron job is already installed.')
+            return
+    
         if os.geteuid() != 0:
             print('\nThis action requires root privileges.')
             print('Please run the script with sudo, e.g.:')
