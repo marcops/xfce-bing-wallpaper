@@ -158,14 +158,15 @@ def copy_self_to_usr_local(dest_name='xfce-bing-wallpaper'):
 
 def install_cron_job(dest_executable='/usr/local/bin/xfce-bing-wallpaper'):
     cronfile = '/etc/cron.d/xfce-bing-wallpaper'
+    python_path = '/usr/bin/python3'
     cron_lines = [
-        f"0 3 * * * root {dest_executable} --set-wallpaper\n",
-        f"0 15 * * * root {dest_executable} --set-wallpaper\n"
+        f"0 */1 * * * * {python_path} {dest_executable} --set-wallpaper\n",
+        f"0 15 * * * * {python_path} {dest_executable} --set-wallpaper\n"
     ]
     try:
         with open(cronfile, 'w') as fh:
             fh.writelines(cron_lines)
-        os.chmod(cronfile, 0o644)
+        os.chmod(cronfile, 0o755)
         print('Cron job installed at', cronfile)
         return cronfile
     except PermissionError:
@@ -183,9 +184,6 @@ def interactive_prompt():
     choice = input('Choose 1 or 2: ').strip()
     return choice
 
-def cron_job_exists(cronfile='/etc/cron.d/xfce-bing-wallpaper'):
-    return os.path.exists(cronfile) and os.path.getsize(cronfile) > 0
-
 def main():
     if len(sys.argv) > 1 and sys.argv[1] in ('set-wallpaper', '--set-wallpaper'):
         set_wallpaper()
@@ -195,10 +193,6 @@ def main():
     if choice == '1':
         set_wallpaper()
     elif choice == '2':
-        if cron_job_exists():
-            print('Cron job is already installed.')
-            return
-    
         if os.geteuid() != 0:
             print('\nThis action requires root privileges.')
             print('Please run the script with sudo, e.g.:')
