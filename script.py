@@ -140,41 +140,43 @@ def set_wallpaper():
     subprocess.run(['xfdesktop', '--reload'], check=False)
     print('Wallpaper set for monitors:', ', '.join(monitors))
 
+def copy_script_to_local_bin(dest_executable=os.path.expanduser('~/.local/bin/xfce-bing-wallpaper')):
+    """
+    Copia o script atual para ~/.local/bin e garante permissão executável.
+    """
+    import shutil
 
-def copy_self_to_usr_local(dest_name='xfce-bing-wallpaper'):
-    src = os.path.realpath(__file__)
-    dest = os.path.join('/usr/local/bin', dest_name)
-    try:
-        shutil.copyfile(src, dest)
-        os.chmod(dest, 0o755)
-        return dest
-    except PermissionError:
-        print('Permission denied: need to run as root to copy to /usr/local/bin')
-        return None
-    except Exception as e:
-        print('Failed to copy to /usr/local/bin:', e)
-        return None
+    os.makedirs(os.path.dirname(dest_executable), exist_ok=True)
 
+    if not os.path.exists(dest_executable):
+        try:
+            shutil.copyfile(os.path.realpath(__file__), dest_executable)
+            os.chmod(dest_executable, 0o755)
+            print(f'Script copied to {dest_executable} and made executable.')
+        except Exception as e:
+            print(f'Failed to copy script to {dest_executable}:', e)
+            return False
+    else:
+        print(f'Script already exists at {dest_executable}.')
+    return True
 
-def install_cron_job(dest_executable='/usr/local/bin/xfce-bing-wallpaper'):
-    cronfile = '/etc/cron.d/xfce-bing-wallpaper'
+def install_user_cron(dest_executable=os.path.expanduser('~/.local/bin/xfce-bing-wallpaper')):
+    
     python_path = '/usr/bin/python3'
-    cron_lines = [
-        f"0 */1 * * * * {python_path} {dest_executable} --set-wallpaper\n",
-        f"0 15 * * * * {python_path} {dest_executable} --set-wallpaper\n"
-    ]
+    monitor = 'DISPLAY=:0 XAUTHORITY=/home/marco/.Xauthority'
+    dbus = 'DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus'
+
+    new_cron = (
+        f"@reboot sleep 120 && {dbus} {monitor} {python_path} {dest_executable} --set-wallpaper\n"
+        f"0 */6 * * * {dbus} {monitor} {python_path} {dest_executable} --set-wallpaper\n"
+    )
     try:
-        with open(cronfile, 'w') as fh:
-            fh.writelines(cron_lines)
-        os.chmod(cronfile, 0o755)
-        print('Cron job installed at', cronfile)
-        return cronfile
-    except PermissionError:
-        print('Permission denied: need to run as root to write to /etc/cron.d')
-        return None
+        subprocess.run(['crontab', '-'], input=new_cron, text=True)
+        print('User cron job installed.')
+        return True
     except Exception as e:
-        print('Failed to install cron job:', e)
-        return None
+        print('Failed to install user cron:', e)
+        return False
 
 
 def interactive_prompt():
@@ -193,13 +195,9 @@ def main():
     if choice == '1':
         set_wallpaper()
     elif choice == '2':
-        if os.geteuid() != 0:
-            print('\nThis action requires root privileges.')
-            print('Please run the script with sudo, e.g.:')
-            print(f'  sudo python3 {os.path.realpath(__file__)}')
-            return
         print('Installing scheduled job.')
-        install_cron_job('/usr/local/bin/xfce-bing-wallpaper')
+        copy_script_to_local_bin()
+        install_user_cron()
     else:
         print('Invalid choice, exiting.')
 
