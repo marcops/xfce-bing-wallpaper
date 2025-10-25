@@ -1,21 +1,51 @@
 # XFCE4 Bing Wallpaper
-##### Set [Bing](http://bing.com) image as your Linux wallpaper.
-***
-I like Bing images for my wallpaper. On Windows you can use 'Bing Desktop' application to set your daily wallpaper from bing but there is no such thing on Linux.
+
+[![Python](https://img.shields.io/badge/Python-3.x-blue.svg)](https://www.python.org/)
+[![XFCE](https://img.shields.io/badge/Desktop-XFCE4-orange.svg)](https://www.xfce.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+Set [Bing](http://bing.com) daily image as your **XFCE4** wallpaper automatically.  
+
+Inspired by [moeenz/xfce-bing-wallpaper](https://github.com/moeenz/xfce-bing-wallpaper).  
+
+---
+
+## Features
+
+- Downloads the daily **Bing image**.  
+- Automatically sets it as your **XFCE4 wallpaper**.  
+- Supports multiple monitors.  
+- Optional **cron job** to update wallpaper twice daily (03:00 & 15:00).  
+
+---
 
 ## Requirements
-This script is written in python 3 so all you need is a version 3 of python with no external libraries. Also this script is for [XFCE](http://www.xfce.org) DE, but you can make this suitable for [GNOME](http://www.gnome.org) or other environments as well by changing the command in line 49 for the corresponding DE.
+
+- Python 3 (≥3.6)  
+- XFCE4 Desktop Environment  
+
+> No extra libraries required except `requests` (install via `pip install requests` if missing).
+
+---
+
+## Installation
+
+### Download Script
+
+```bash
+wget https://raw.githubusercontent.com/marcops/xfce-bing-wallpaper/main/xfce-bing-wallpaper.py -O xfce-bing-wallpaper.py
+```
 
 ## Usage
-All you need to do is running this command:
-```shell
-    python script.py
+### Interactive Mode
+```bash
+python3 xfce-bing-wallpaper.py
 ```
-You can run this script on system startup to change your wallpaper on boot. Locale can be changed too from 'hpimagearchive_url' field.
+1 → Set wallpaper now.
 
-## Potential Issues
-You may not succeed in changing your wallpaper so if image was download but your wallpaper did not change first run:
-```shell
-    xfconf-query -c xfce4-desktop -p /backdrop -m
+2 → Install cron job (requires root).
+
+### Direct Command
+```bash
+python3 xfce-bing-wallpaper.py --set-wallpaper
 ```
-Then try to change your wallpaper through normal desktop settings and see the result on terminal. Substitute the command in line 46 with what you see on terminal for proper result.

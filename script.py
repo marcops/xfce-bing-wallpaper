@@ -27,17 +27,21 @@ def get_image_link():
 
 def download_image(img_link):
     """
-        Checks for a valid full-size image file and if valid, downloads the image.
+    Checks for a valid full-size image file and if valid, downloads the image.
+    Saves in the XFCE default wallpaper location.
     """
 
     if img_link is not None:  # ensure that we got a valid full-size jpeg background image.
-        img_dir = os.path.join(current_dir, 'img')
+        img_dir = os.path.expanduser('~/.local/share/xfce-bing-wallpaper/')
         os.makedirs(img_dir, exist_ok=True)
-        img = requests.get(img_link)    # download image.
+        
+        img = requests.get(img_link)    # download image
         filename = img_link.split('/')[-1]
         filepath = os.path.join(img_dir, filename)
+        
         with open(filepath, 'wb') as img_file:
-            img_file.write(img.content) # write bytes to file.
+            img_file.write(img.content)  # write bytes to file
+        
         return filepath
     return None
 
@@ -163,34 +167,27 @@ def interactive_prompt():
     print('What would you like to do?')
     print('1) Set wallpaper now')
     print('2) Install scheduled job (cron at 03:00 and 15:00)')
-    print('3) Both set now and install scheduled job')
-    choice = input('Choose 1, 2 or 3: ').strip()
+    choice = input('Choose 1 or 2: ').strip()
     return choice
 
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] == 'set-wallpaper':
+        set_wallpaper()
+        return
+    
     # Interactive-only flow: running the script asks the user what to do.
     choice = interactive_prompt()
     if choice == '1':
         set_wallpaper()
     elif choice == '2':
-        print('Installing scheduled job. This will require root privileges.')
-        print('If you want the script to be available at /usr/local/bin, run this script with sudo and choose option 3.')
         if os.geteuid() != 0:
-            print('Not running as root. To complete installation run: sudo python3', os.path.realpath(__file__))
-            print('Then choose option 2 or 3 when prompted.')
-        else:
-            install_cron_job('/usr/local/bin/xfce-bing-wallpaper')
-    elif choice == '3':
-        set_wallpaper()
-        print('\nInstalling scheduled job. This will require root privileges.')
-        if os.geteuid() != 0:
-            print('Not running as root. To complete installation run: sudo python3', os.path.realpath(__file__))
-            print('Then choose option 3 when prompted to copy the script and install the cron job.')
-        else:
-            dest = copy_self_to_usr_local('xfce-bing-wallpaper')
-            exec_path = dest if dest else '/usr/local/bin/xfce-bing-wallpaper'
-            install_cron_job(exec_path)
+            print('\nThis action requires root privileges.')
+            print('Please run the script with sudo, e.g.:')
+            print(f'  sudo python3 {os.path.realpath(__file__)}')
+            return
+        print('Installing scheduled job. This will require root privileges.')       
+        install_cron_job('/usr/local/bin/xfce-bing-wallpaper')
     else:
         print('Invalid choice, exiting.')
 
