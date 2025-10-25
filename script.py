@@ -182,8 +182,7 @@ def interactive_prompt():
     print('What would you like to do?')
     print('1) Set wallpaper now')
     print('2) Install scheduled job (cron at 03:00 and 15:00)')
-    choice = input('Choose 1 or 2: ').strip()
-    return choice
+    return input('Choose 1 or 2: ').strip()
 
 def main():
     if len(sys.argv) > 1 and sys.argv[1] in ('set-wallpaper', '--set-wallpaper'):
